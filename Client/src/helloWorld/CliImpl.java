@@ -22,9 +22,9 @@ public class CliImpl extends UnicastRemoteObject implements InterfaceCli {
     this.chavePublica = chavePublica;
   }
 
-  public void solicitarRegistroInteresse(InterfaceServ referenciaServidor, PublicKey chavePublica, byte[] assinatura, String msg) throws RemoteException {
+  public void solicitarRegistroInteresse(InterfaceServ referenciaServidor, PublicKey chavePublica, byte[] assinatura, int numRecurso, String msg) throws RemoteException {
     try {
-      referenciaServidor.registrarInteresse(this.id + " " + msg, this, 1, chavePublica);
+      referenciaServidor.registrarInteresse(this.id + " " + msg, this, numRecurso, chavePublica);
     } catch (RemoteException e) {
       e.printStackTrace();
     }

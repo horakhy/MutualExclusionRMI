@@ -16,7 +16,8 @@ public class Client {
 
         PublicKey chavePublica = client.getChavePublica();
         // System.out.println("Chave Publica: " + chavePublica.toString());
+        int numRecurso = 1;
         
-        client.solicitarRegistroInteresse(referenciaServidor, chavePublica, assinatura, msg);
+        client.solicitarRegistroInteresse(referenciaServidor, chavePublica, assinatura, numRecurso, msg);
     }
 }
