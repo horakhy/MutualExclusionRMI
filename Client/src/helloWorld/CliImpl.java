@@ -6,59 +6,40 @@ import java.security.*;
 import java.util.UUID;
 
 public class CliImpl extends UnicastRemoteObject implements InterfaceCli {
-  private long id;
-  private PublicKey chavePublica;
+	private long id;
 
-  public CliImpl() throws RemoteException {
-    this.id = (UUID.randomUUID().getMostSignificantBits() & Long.MAX_VALUE) % 1000;
-    // referenciaServidor.registrarInteresse(this.id + " Yoooo", this, 1, 1);
-  }
+	public CliImpl(InterfaceServ referenciaServidor) throws RemoteException, InvalidKeyException, NoSuchAlgorithmException, SignatureException {
+		this.id = (UUID.randomUUID().getMostSignificantBits() & Long.MAX_VALUE) % 1000;
+		referenciaServidor.registrarInteresse(this.id + " Yoooo", this, 1);
+	}
 
-  public PublicKey getChavePublica() {
-    return chavePublica;
-  }
+	@Override
+	public void notificar(String text) {
+		System.out.println("Sua mensagem eh: " + text);
 
-  public void setChavePublica(PublicKey chavePublica) {
-    this.chavePublica = chavePublica;
-  }
+	}
+	@Override
+	public void notificar(String text, byte[] assinatura, PublicKey chavePublica) throws RemoteException, InvalidKeyException, NoSuchAlgorithmException, SignatureException {
+		verificaMensagem(chavePublica, text, assinatura);
+		System.out.println("Sua mensagem eh: " + text);
 
-  public void solicitarRegistroInteresse(InterfaceServ referenciaServidor, PublicKey chavePublica, byte[] assinatura, int numRecurso, String msg) throws RemoteException {
-    try {
-      referenciaServidor.registrarInteresse(this.id + " " + msg, this, numRecurso, chavePublica);
-    } catch (RemoteException e) {
-      e.printStackTrace();
-    }
-  }
+	}
 
-  public byte[] geraAssinatura(String mensagem) throws NoSuchAlgorithmException,
-      InvalidKeyException, SignatureException {
-    Signature sig = Signature.getInstance("DSA");
+	public void verificaMensagem(PublicKey chavePublica, String mensagem, byte[] assinatura)
+			throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+		Signature serverSig = Signature.getInstance("DSA");
+		serverSig.initVerify(chavePublica);
+		serverSig.update(mensagem.getBytes());
 
-    // Geração das chaves públicas e privadas
-    KeyPairGenerator kpg = KeyPairGenerator.getInstance("DSA");
-    SecureRandom secRan = new SecureRandom();
-    kpg.initialize(512, secRan);
-    KeyPair keyP = kpg.generateKeyPair();
-    this.chavePublica = keyP.getPublic();
-    PrivateKey priKey = keyP.getPrivate();
-
-    // Inicializando Obj Signature com a Chave Privada
-    sig.initSign(priKey);
-
-    // Gerar assinatura
-    sig.update(mensagem.getBytes());
-    byte[] assinatura = sig.sign();
-
-    return assinatura;
-  }
-
-  @Override
-  public void notificar(String text) {
-    System.out.println("Sua mensagem eh: " + text);
-
-  }
+		if (serverSig.verify(assinatura)) {
+			// Mensagem corretamente assinada
+			System.out.println("A Mensagem recebida foi assinada corretamente.");
+		} else {
+			// Mensagem não pode ser validada
+			System.out.println("A Mensagem recebida NÃO pode ser validada.");
+		}
+	}
 }
-
 // private PublicKey pubKey;
 
 // public PublicKey getPubKey() {
