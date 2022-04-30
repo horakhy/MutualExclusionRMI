@@ -6,5 +6,7 @@ import java.security.*;
 
 public interface InterfaceServ extends Remote {
 
-	public void registrarInteresse(String text, InterfaceCli referenciaCliente, int numRecurso) throws RemoteException, InvalidKeyException, NoSuchAlgorithmException, SignatureException;
+	public String registrarInteresse(String text, InterfaceCli referenciaCliente, int numRecurso) throws RemoteException, InvalidKeyException, NoSuchAlgorithmException, SignatureException;
+
+	public String registrarLiberacao(String text, InterfaceCli referenciaCliente, int numRecurso) throws RemoteException, NoSuchAlgorithmException;
 }

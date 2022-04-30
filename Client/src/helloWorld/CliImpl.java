@@ -7,10 +7,19 @@ import java.util.UUID;
 
 public class CliImpl extends UnicastRemoteObject implements InterfaceCli {
 	private long id;
+	private PublicKey chavePublicaServidor;
 
 	public CliImpl(InterfaceServ referenciaServidor) throws RemoteException, InvalidKeyException, NoSuchAlgorithmException, SignatureException {
 		this.id = (UUID.randomUUID().getMostSignificantBits() & Long.MAX_VALUE) % 1000;
-		referenciaServidor.registrarInteresse(this.id + " Yoooo", this, 1);
+		System.out.println("Cliente " + this.id + " criado");
+	}
+	@Override
+	public long getId() {
+		return this.id;
+	}
+
+	public void setChavePublicaServidor(PublicKey chavePublicaServidor) {
+		this.chavePublicaServidor = chavePublicaServidor;
 	}
 
 	@Override

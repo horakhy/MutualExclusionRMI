@@ -6,84 +6,196 @@ import java.security.*;
 import java.util.*;
 
 public class ServImpl extends UnicastRemoteObject implements InterfaceServ {
-  private final String PEGOU_RECURSO_UM = "Você pegou o recurso 1";
-  private final String PEGOU_RECURSO_DOIS = "Você pegou o recurso 2";
-  private final String RECURSO_UM_OCUPADO = "O recurso 1 está sendo utilizado por outro cliente";
-  private final String RECURSO_DOIS_OCUPADO = "O recurso 2 está sendo utilizado por outro cliente";
+	private final String PEGOU_RECURSO_UM = "Você pegou o recurso 1";
+	private final String PEGOU_RECURSO_DOIS = "Você pegou o recurso 2";
+	private final String RECURSO_UM_OCUPADO = "O recurso 1 está sendo utilizado por outro cliente";
+	private final String RECURSO_DOIS_OCUPADO = "O recurso 2 está sendo utilizado por outro cliente";
+	private final String RECURSO_UM_INVALIDO = "Você não está utilizando o recurso 1";
+	private final String RECURSO_DOIS_INVALIDO = "Você não está utilizando o recurso 2";
+	private final String RECURSO_UM_LIBERADO = "Você liberou o recurso 1";
+	private final String RECURSO_DOIS_LIBERADO = "Você liberou o recurso 2";
 
-  private ArrayList<InterfaceCli> clientesEmEspera1;
-  private ArrayList<InterfaceCli> clientesEmEspera2;
-  private ArrayList<InterfaceCli> clientesQueJáPediramRecurso;
-  private boolean recursoDisponível_1 = true;
-  private boolean recursoDisponível_2 = true;
-  private PublicKey chavePublica;
-  private PrivateKey chavePrivada;
+	private final String RECURSO_UM_LIVRE = "O recurso 1 está livre";
+	private final String RECURSO_DOIS_LIVRE = "O recurso 2 está livre";
 
-  private static final int TEMPO_LIMITE = 5000; // Tempo em milisegundos
+	private final String STRING_VAZIA = "";
 
-  public ServImpl() throws RemoteException {
-    super();
-    this.clientesEmEspera1 = new ArrayList<InterfaceCli>();
-    this.clientesEmEspera2 = new ArrayList<InterfaceCli>();
-    this.clientesQueJáPediramRecurso = new ArrayList<InterfaceCli>();
-  }
+	private long clienteComRecurso_1;
+	private long clienteComRecurso_2;
+	private ArrayList<InterfaceCli> clientesEmEspera1;
+	private ArrayList<InterfaceCli> clientesEmEspera2;
+	private ArrayList<InterfaceCli> clientesQueJáPediramRecurso;
+	private boolean recursoDisponível_1 = true;
+	private boolean recursoDisponível_2 = true;
+	private PublicKey chavePublica;
+	private PrivateKey chavePrivada;
 
-  public PublicKey getChavePublica() {
-    return chavePublica;
-  }
+	private static final int TEMPO_LIMITE = 5000; // Tempo em milisegundos
 
-  public void setChavePublica(PublicKey chavePublica) {
-    this.chavePublica = chavePublica;
-  }
+	public ServImpl() throws RemoteException {
+		super();
+		this.clientesEmEspera1 = new ArrayList<InterfaceCli>();
+		this.clientesEmEspera2 = new ArrayList<InterfaceCli>();
+		this.clientesQueJáPediramRecurso = new ArrayList<InterfaceCli>();
+		this.clienteComRecurso_1 = -1;
+		this.clienteComRecurso_2 = -1;
+		geraChaves();
 
-  public byte[] geraAssinatura(String mensagem) throws NoSuchAlgorithmException,
-      InvalidKeyException, SignatureException {
-    Signature sig = Signature.getInstance("DSA");
+	}
 
-    // Geração das chaves públicas e privadas
-    KeyPairGenerator kpg = KeyPairGenerator.getInstance("DSA");
-    SecureRandom secRan = new SecureRandom();
-    kpg.initialize(512, secRan);
-    KeyPair keyP = kpg.generateKeyPair();
-    this.chavePublica = keyP.getPublic();
-    this.chavePrivada = keyP.getPrivate();
+	public PublicKey getChavePublica() {
+		return chavePublica;
+	}
 
-    // Inicializando Obj Signature com a Chave Privada
-    sig.initSign(this.chavePrivada);
+	public void geraChaves() {
+		// Geração das chaves públicas e privadas
+		KeyPairGenerator kpg;
+		try {
+			kpg = KeyPairGenerator.getInstance("DSA");
+			SecureRandom secRan = new SecureRandom();
+			kpg.initialize(512, secRan);
 
-    // Gerar assinatura
-    sig.update(mensagem.getBytes());
-    byte[] assinatura = sig.sign();
+			KeyPair keyP = kpg.generateKeyPair();
+			this.chavePublica = keyP.getPublic();
+			this.chavePrivada = keyP.getPrivate();
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
 
-    return assinatura;
-  }
+	}
 
-  @Override
-  public void registrarInteresse(String text, InterfaceCli referenciaCliente, int numRecurso)
-      throws RemoteException, InvalidKeyException, NoSuchAlgorithmException, SignatureException {
-    if (clientesEmEspera1.size() == 0 && this.recursoDisponível_1) {
-      
-      // Cliente pediu recurso pela primeira vez
-      if (!clientesQueJáPediramRecurso.contains(referenciaCliente)) {
-        byte[] assinatura = this.geraAssinatura(PEGOU_RECURSO_UM);
-        referenciaCliente.notificar(PEGOU_RECURSO_UM, assinatura, this.chavePublica);
-        this.recursoDisponível_1 = false;
-        return;
-      }
+	public byte[] geraAssinatura(String mensagem) throws NoSuchAlgorithmException,
+			InvalidKeyException, SignatureException {
+		Signature sig = Signature.getInstance("DSA");
 
-      // Cliente pediu recurso mais de uma vez
-      referenciaCliente.notificar(PEGOU_RECURSO_UM);
-      return;
-    }
-    
-    // Adiciona na fila de espera
-    clientesEmEspera1.add(referenciaCliente);
-    referenciaCliente.notificar(RECURSO_UM_OCUPADO);
+		// Inicializando Obj Signature com a Chave Privada
+		sig.initSign(this.chavePrivada);
 
-  }
+		// Gerar assinatura
+		sig.update(mensagem.getBytes());
+		byte[] assinatura = sig.sign();
 
-  public void enviarResposta(String text, InterfaceCli referenciaCliente) throws RemoteException {
-    referenciaCliente.notificar(text);
-  }
+		return assinatura;
+	}
 
+	public String processaPedido_1(String text, InterfaceCli referenciaCliente)
+			throws RemoteException, InvalidKeyException, NoSuchAlgorithmException, SignatureException {
+		if (this.recursoDisponível_1) {
+			this.recursoDisponível_1 = false;
+			this.clienteComRecurso_1 = referenciaCliente.getId();
+			// Cliente pediu recurso pela primeira vez
+			if (!clientesQueJáPediramRecurso.contains(referenciaCliente)) {
+				return PEGOU_RECURSO_UM;
+			}
+
+			// Cliente pediu recurso mais de uma vez
+			return PEGOU_RECURSO_UM;
+		}
+
+		byte[] assinatura = this.geraAssinatura(RECURSO_UM_OCUPADO);
+
+		// Cliente pediu recurso pela primeira vez
+		if (!clientesQueJáPediramRecurso.contains(referenciaCliente)) {
+			clientesQueJáPediramRecurso.add(referenciaCliente);
+			clientesEmEspera1.add(referenciaCliente);
+			referenciaCliente.notificar(RECURSO_UM_OCUPADO, assinatura, this.chavePublica);
+			return STRING_VAZIA;
+		}
+
+		// Cliente pediu recurso mais de uma vez
+		// Adiciona na fila de espera
+		clientesEmEspera1.add(referenciaCliente);
+		referenciaCliente.notificar(RECURSO_UM_OCUPADO);
+		return STRING_VAZIA;
+	}
+
+	public String processaPedido_2(String text, InterfaceCli referenciaCliente)
+			throws RemoteException, InvalidKeyException, NoSuchAlgorithmException, SignatureException {
+		if (this.recursoDisponível_2) {
+			this.recursoDisponível_2 = false;
+			this.clienteComRecurso_2 = referenciaCliente.getId();
+
+			// Cliente pediu recurso pela primeira vez
+			if (!clientesQueJáPediramRecurso.contains(referenciaCliente)) {
+				clientesQueJáPediramRecurso.add(referenciaCliente);
+				return PEGOU_RECURSO_DOIS;
+			}
+			// Cliente pediu recurso mais de uma vez
+			return PEGOU_RECURSO_DOIS;
+		}
+
+		byte[] assinatura = this.geraAssinatura(RECURSO_DOIS_OCUPADO);
+
+		// Cliente pediu recurso pela primeira vez
+		if (!clientesQueJáPediramRecurso.contains(referenciaCliente)) {
+			clientesQueJáPediramRecurso.add(referenciaCliente);
+			clientesEmEspera2.add(referenciaCliente);
+			referenciaCliente.notificar(RECURSO_DOIS_OCUPADO, assinatura, this.chavePublica);
+			return STRING_VAZIA;
+		}
+
+		// Cliente pediu recurso mais de uma vez
+		// Adiciona na fila de espera
+		clientesEmEspera2.add(referenciaCliente);
+		referenciaCliente.notificar(RECURSO_DOIS_OCUPADO);
+		return STRING_VAZIA;
+	}
+
+	@Override
+	public String registrarInteresse(String text, InterfaceCli referenciaCliente, int numRecurso)
+			throws RemoteException, InvalidKeyException, NoSuchAlgorithmException, SignatureException {
+		if (numRecurso == 1) {
+
+			return processaPedido_1(text, referenciaCliente);
+		}
+
+		return processaPedido_2(text, referenciaCliente);
+
+	}
+
+	@Override
+	public String registrarLiberacao(String text, InterfaceCli referenciaCliente, int numRecurso)
+			throws RemoteException, RemoteException, NoSuchAlgorithmException {
+
+		if (numRecurso == 1) {
+			if (referenciaCliente.getId() != this.clienteComRecurso_1) {
+				return RECURSO_UM_INVALIDO;
+			}
+
+			if (clientesEmEspera1.size() > 0) {
+				InterfaceCli cliente = clientesEmEspera1.get(0);
+				this.clienteComRecurso_1 = cliente.getId();
+				clientesEmEspera1.remove(0);
+				cliente.notificar(RECURSO_UM_LIVRE);
+
+				return RECURSO_UM_LIBERADO;
+			}
+			this.recursoDisponível_1 = true;
+      this.clienteComRecurso_1 = -1;
+			return RECURSO_UM_LIBERADO;
+		}
+
+		if (numRecurso == 2) {
+			if (referenciaCliente.getId() != this.clienteComRecurso_2) {
+				return RECURSO_DOIS_INVALIDO;
+			}
+
+			if (clientesEmEspera2.size() > 0) {
+				InterfaceCli cliente = clientesEmEspera2.get(0);
+				this.clienteComRecurso_2 = cliente.getId();
+				clientesEmEspera2.remove(0);
+				cliente.notificar(RECURSO_DOIS_LIVRE);
+
+				return RECURSO_DOIS_LIBERADO;
+			}
+			this.recursoDisponível_2 = true;
+      this.clienteComRecurso_2 = -1;
+			return RECURSO_DOIS_LIBERADO;
+		}
+		return STRING_VAZIA;
+	}
+
+	public void enviarResposta(String text, InterfaceCli referenciaCliente) throws RemoteException {
+		referenciaCliente.notificar(text);
+	}
 }

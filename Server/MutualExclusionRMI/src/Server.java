@@ -11,10 +11,6 @@ public class Server {
         ServImpl server = new ServImpl();
 
         referenciaServicoNomes.rebind("HelloBrudah", referenciaServidor);
-
-        
-        int numRecurso = 1;
-
-        PublicKey chavePublica = server.getChavePublica();
+        System.out.println("Servidor pronto");
     }
 }
