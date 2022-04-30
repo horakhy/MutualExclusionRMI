@@ -10,6 +10,7 @@ public class ServImpl extends UnicastRemoteObject implements InterfaceServ {
 	private final String PEGOU_RECURSO_DOIS = "Você pegou o recurso 2";
 	private final String RECURSO_UM_OCUPADO = "O recurso 1 está sendo utilizado por outro cliente";
 	private final String RECURSO_DOIS_OCUPADO = "O recurso 2 está sendo utilizado por outro cliente";
+
 	private final String RECURSO_UM_INVALIDO = "Você não está utilizando o recurso 1";
 	private final String RECURSO_DOIS_INVALIDO = "Você não está utilizando o recurso 2";
 	private final String RECURSO_UM_LIBERADO = "Você liberou o recurso 1";
@@ -18,6 +19,7 @@ public class ServImpl extends UnicastRemoteObject implements InterfaceServ {
 	private final String RECURSO_UM_LIVRE = "O recurso 1 está livre";
 	private final String RECURSO_DOIS_LIVRE = "O recurso 2 está livre";
 
+	private final String RECURSO_JA_OBTIDO = "Você já possui esse recurso";
 	private final String STRING_VAZIA = "";
 
 	private long clienteComRecurso_1;
@@ -83,8 +85,10 @@ public class ServImpl extends UnicastRemoteObject implements InterfaceServ {
 		if (this.recursoDisponível_1) {
 			this.recursoDisponível_1 = false;
 			this.clienteComRecurso_1 = referenciaCliente.getId();
+
 			// Cliente pediu recurso pela primeira vez
 			if (!clientesQueJáPediramRecurso.contains(referenciaCliente)) {
+        clientesQueJáPediramRecurso.add(referenciaCliente);
 				return PEGOU_RECURSO_UM;
 			}
 
@@ -105,7 +109,7 @@ public class ServImpl extends UnicastRemoteObject implements InterfaceServ {
 		// Cliente pediu recurso mais de uma vez
 		// Adiciona na fila de espera
 		clientesEmEspera1.add(referenciaCliente);
-		referenciaCliente.notificar(RECURSO_UM_OCUPADO);
+		referenciaCliente.notificar(RECURSO_UM_OCUPADO, assinatura);
 		return STRING_VAZIA;
 	}
 
@@ -137,25 +141,31 @@ public class ServImpl extends UnicastRemoteObject implements InterfaceServ {
 		// Cliente pediu recurso mais de uma vez
 		// Adiciona na fila de espera
 		clientesEmEspera2.add(referenciaCliente);
-		referenciaCliente.notificar(RECURSO_DOIS_OCUPADO);
+		referenciaCliente.notificar(RECURSO_DOIS_OCUPADO, assinatura);
 		return STRING_VAZIA;
 	}
 
 	@Override
 	public String registrarInteresse(String text, InterfaceCli referenciaCliente, int numRecurso)
 			throws RemoteException, InvalidKeyException, NoSuchAlgorithmException, SignatureException {
-		if (numRecurso == 1) {
 
-			return processaPedido_1(text, referenciaCliente);
+		if (referenciaCliente.getId() != this.clienteComRecurso_1){
+      System.out.println(Arrays.toString(clientesQueJáPediramRecurso.toArray()) + " " + referenciaCliente.getId()); 
+
+			if (numRecurso == 1)
+				return processaPedido_1(text, referenciaCliente);
+
 		}
-
-		return processaPedido_2(text, referenciaCliente);
-
+		if (referenciaCliente.getId() != this.clienteComRecurso_2){
+			if (numRecurso == 2)
+				return processaPedido_2(text, referenciaCliente);
+		}
+		return RECURSO_JA_OBTIDO;
 	}
 
 	@Override
 	public String registrarLiberacao(String text, InterfaceCli referenciaCliente, int numRecurso)
-			throws RemoteException, RemoteException, NoSuchAlgorithmException {
+			throws RemoteException, RemoteException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
 
 		if (numRecurso == 1) {
 			if (referenciaCliente.getId() != this.clienteComRecurso_1) {
@@ -163,15 +173,16 @@ public class ServImpl extends UnicastRemoteObject implements InterfaceServ {
 			}
 
 			if (clientesEmEspera1.size() > 0) {
+        byte[] assinatura = this.geraAssinatura(RECURSO_UM_LIVRE);
 				InterfaceCli cliente = clientesEmEspera1.get(0);
 				this.clienteComRecurso_1 = cliente.getId();
 				clientesEmEspera1.remove(0);
-				cliente.notificar(RECURSO_UM_LIVRE);
+				cliente.notificar(RECURSO_UM_LIVRE, assinatura);
 
 				return RECURSO_UM_LIBERADO;
 			}
 			this.recursoDisponível_1 = true;
-      this.clienteComRecurso_1 = -1;
+			this.clienteComRecurso_1 = -1;
 			return RECURSO_UM_LIBERADO;
 		}
 
@@ -181,21 +192,18 @@ public class ServImpl extends UnicastRemoteObject implements InterfaceServ {
 			}
 
 			if (clientesEmEspera2.size() > 0) {
+        byte[] assinatura = this.geraAssinatura(RECURSO_DOIS_LIVRE);
 				InterfaceCli cliente = clientesEmEspera2.get(0);
 				this.clienteComRecurso_2 = cliente.getId();
 				clientesEmEspera2.remove(0);
-				cliente.notificar(RECURSO_DOIS_LIVRE);
+				cliente.notificar(RECURSO_DOIS_LIVRE, assinatura);
 
 				return RECURSO_DOIS_LIBERADO;
 			}
 			this.recursoDisponível_2 = true;
-      this.clienteComRecurso_2 = -1;
+			this.clienteComRecurso_2 = -1;
 			return RECURSO_DOIS_LIBERADO;
 		}
 		return STRING_VAZIA;
-	}
-
-	public void enviarResposta(String text, InterfaceCli referenciaCliente) throws RemoteException {
-		referenciaCliente.notificar(text);
 	}
 }
