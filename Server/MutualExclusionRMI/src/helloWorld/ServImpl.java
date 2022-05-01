@@ -83,27 +83,29 @@ public class ServImpl extends UnicastRemoteObject implements InterfaceServ {
 	public String processaPedido_1(String text, InterfaceCli referenciaCliente)
 			throws RemoteException, InvalidKeyException, NoSuchAlgorithmException, SignatureException {
 		if (this.recursoDisponível_1) {
+			
 			this.recursoDisponível_1 = false;
 			this.clienteComRecurso_1 = referenciaCliente.getId();
 
 			// Cliente pediu recurso pela primeira vez
 			if (!clientesQueJáPediramRecurso.contains(referenciaCliente)) {
-        clientesQueJáPediramRecurso.add(referenciaCliente);
-				return PEGOU_RECURSO_UM;
+				clientesQueJáPediramRecurso.add(referenciaCliente);
+				referenciaCliente.setChavePublicaServidor(this.chavePublica);
 			}
 
 			// Cliente pediu recurso mais de uma vez
 			return PEGOU_RECURSO_UM;
 		}
+			/*
+		* Cliente não pegou o recurso, então deve ser notificado que o recurso está ocupado
+		*/
 
 		byte[] assinatura = this.geraAssinatura(RECURSO_UM_OCUPADO);
 
 		// Cliente pediu recurso pela primeira vez
 		if (!clientesQueJáPediramRecurso.contains(referenciaCliente)) {
 			clientesQueJáPediramRecurso.add(referenciaCliente);
-			clientesEmEspera1.add(referenciaCliente);
-			referenciaCliente.notificar(RECURSO_UM_OCUPADO, assinatura, this.chavePublica);
-			return STRING_VAZIA;
+			referenciaCliente.setChavePublicaServidor(this.chavePublica);
 		}
 
 		// Cliente pediu recurso mais de uma vez
@@ -122,20 +124,22 @@ public class ServImpl extends UnicastRemoteObject implements InterfaceServ {
 			// Cliente pediu recurso pela primeira vez
 			if (!clientesQueJáPediramRecurso.contains(referenciaCliente)) {
 				clientesQueJáPediramRecurso.add(referenciaCliente);
-				return PEGOU_RECURSO_DOIS;
+				referenciaCliente.setChavePublicaServidor(this.chavePublica);
 			}
 			// Cliente pediu recurso mais de uma vez
 			return PEGOU_RECURSO_DOIS;
 		}
+
+		/*
+		* Cliente não pegou o recurso, então deve ser notificado que o recurso está ocupado
+		*/
 
 		byte[] assinatura = this.geraAssinatura(RECURSO_DOIS_OCUPADO);
 
 		// Cliente pediu recurso pela primeira vez
 		if (!clientesQueJáPediramRecurso.contains(referenciaCliente)) {
 			clientesQueJáPediramRecurso.add(referenciaCliente);
-			clientesEmEspera2.add(referenciaCliente);
-			referenciaCliente.notificar(RECURSO_DOIS_OCUPADO, assinatura, this.chavePublica);
-			return STRING_VAZIA;
+			referenciaCliente.setChavePublicaServidor(this.chavePublica);
 		}
 
 		// Cliente pediu recurso mais de uma vez
@@ -149,14 +153,15 @@ public class ServImpl extends UnicastRemoteObject implements InterfaceServ {
 	public String registrarInteresse(String text, InterfaceCli referenciaCliente, int numRecurso)
 			throws RemoteException, InvalidKeyException, NoSuchAlgorithmException, SignatureException {
 
-		if (referenciaCliente.getId() != this.clienteComRecurso_1){
-      System.out.println(Arrays.toString(clientesQueJáPediramRecurso.toArray()) + " " + referenciaCliente.getId()); 
+		if (referenciaCliente.getId() != this.clienteComRecurso_1) {
+			System.out
+					.println(Arrays.toString(clientesQueJáPediramRecurso.toArray()) + " " + referenciaCliente.getId());
 
 			if (numRecurso == 1)
 				return processaPedido_1(text, referenciaCliente);
 
 		}
-		if (referenciaCliente.getId() != this.clienteComRecurso_2){
+		if (referenciaCliente.getId() != this.clienteComRecurso_2) {
 			if (numRecurso == 2)
 				return processaPedido_2(text, referenciaCliente);
 		}
@@ -173,7 +178,7 @@ public class ServImpl extends UnicastRemoteObject implements InterfaceServ {
 			}
 
 			if (clientesEmEspera1.size() > 0) {
-        byte[] assinatura = this.geraAssinatura(RECURSO_UM_LIVRE);
+				byte[] assinatura = this.geraAssinatura(RECURSO_UM_LIVRE);
 				InterfaceCli cliente = clientesEmEspera1.get(0);
 				this.clienteComRecurso_1 = cliente.getId();
 				clientesEmEspera1.remove(0);
@@ -192,7 +197,7 @@ public class ServImpl extends UnicastRemoteObject implements InterfaceServ {
 			}
 
 			if (clientesEmEspera2.size() > 0) {
-        byte[] assinatura = this.geraAssinatura(RECURSO_DOIS_LIVRE);
+				byte[] assinatura = this.geraAssinatura(RECURSO_DOIS_LIVRE);
 				InterfaceCli cliente = clientesEmEspera2.get(0);
 				this.clienteComRecurso_2 = cliente.getId();
 				clientesEmEspera2.remove(0);

@@ -8,7 +8,7 @@ public interface InterfaceCli extends Remote {
   
   public long getId() throws RemoteException;
 
-  public void notificar (String text, byte[] assinatura, PublicKey chavePublica) throws RemoteException, InvalidKeyException, NoSuchAlgorithmException, SignatureException;
+  public void setChavePublicaServidor(PublicKey chavePublicaServidor) throws RemoteException, InvalidKeyException, NoSuchAlgorithmException, SignatureException;
 
   public void notificar (String text, byte[] assinatura) throws RemoteException, InvalidKeyException, NoSuchAlgorithmException, SignatureException;
 }

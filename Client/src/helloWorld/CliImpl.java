@@ -18,6 +18,7 @@ public class CliImpl extends UnicastRemoteObject implements InterfaceCli {
 		return this.id;
 	}
 
+	@Override
 	public void setChavePublicaServidor(PublicKey chavePublicaServidor) {
 		this.chavePublicaServidor = chavePublicaServidor;
 	}
@@ -26,14 +27,6 @@ public class CliImpl extends UnicastRemoteObject implements InterfaceCli {
 	public void notificar(String text, byte[] assinatura) throws RemoteException, InvalidKeyException, NoSuchAlgorithmException, SignatureException {
 		verificaMensagem(this.chavePublicaServidor, text, assinatura);
 		System.out.println("Sua mensagem eh: " + text);
-	}
-
-	@Override
-	public void notificar(String text, byte[] assinatura, PublicKey chavePublica) throws RemoteException, InvalidKeyException, NoSuchAlgorithmException, SignatureException {
-		this.chavePublicaServidor = chavePublica;
-		verificaMensagem(this.chavePublicaServidor, text, assinatura);
-		System.out.println("Sua mensagem eh: " + text);
-
 	}
 
 	public void verificaMensagem(PublicKey chavePublica, String mensagem, byte[] assinatura)
