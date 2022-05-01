@@ -11,7 +11,7 @@ public class CliImpl extends UnicastRemoteObject implements InterfaceCli {
 
 	public CliImpl(InterfaceServ referenciaServidor) throws RemoteException, InvalidKeyException, NoSuchAlgorithmException, SignatureException {
 		this.id = (UUID.randomUUID().getMostSignificantBits() & Long.MAX_VALUE) % 1000;
-		System.out.println("Cliente " + this.id + " criado");
+		System.out.println("\nCliente " + this.id + " criado\n");
 	}
 	@Override
 	public long getId() {
@@ -26,7 +26,7 @@ public class CliImpl extends UnicastRemoteObject implements InterfaceCli {
 	@Override
 	public void notificar(String text, byte[] assinatura) throws RemoteException, InvalidKeyException, NoSuchAlgorithmException, SignatureException {
 		verificaMensagem(this.chavePublicaServidor, text, assinatura);
-		System.out.println("Sua mensagem eh: " + text);
+		System.out.println(text);
 	}
 
 	public void verificaMensagem(PublicKey chavePublica, String mensagem, byte[] assinatura)
@@ -37,10 +37,10 @@ public class CliImpl extends UnicastRemoteObject implements InterfaceCli {
 
 		if (serverSig.verify(assinatura)) {
 			// Mensagem corretamente assinada
-			System.out.println("A Mensagem recebida foi assinada corretamente.");
+			System.out.println("\nA Mensagem recebida foi assinada corretamente.");
 		} else {
 			// Mensagem não pode ser validada
-			System.out.println("A Mensagem recebida NÃO pode ser validada.");
+			System.out.println("\nA Mensagem recebida NÃO pode ser validada.");
 		}
 	}
 }

@@ -35,6 +35,7 @@ public class Client {
         Scanner scanner = new Scanner(System.in);
         while (true) {
 
+            System.out.println();
             int opt = scanner.nextInt();
 
             switch (opt) {

@@ -8,19 +8,18 @@ import java.util.*;
 public class ServImpl extends UnicastRemoteObject implements InterfaceServ {
 	private final String PEGOU_RECURSO_UM = "Você pegou o recurso 1";
 	private final String PEGOU_RECURSO_DOIS = "Você pegou o recurso 2";
-	private final String RECURSO_UM_OCUPADO = "O recurso 1 está sendo utilizado por outro cliente";
-	private final String RECURSO_DOIS_OCUPADO = "O recurso 2 está sendo utilizado por outro cliente";
+	private final String RECURSO_UM_OCUPADO = "O recurso 1 está ocupado, você foi adicionado na fila de espera";
+	private final String RECURSO_DOIS_OCUPADO = "O recurso 2 está ocupado, você foi adicionado na fila de espera";
 
 	private final String RECURSO_UM_INVALIDO = "Você não está utilizando o recurso 1";
 	private final String RECURSO_DOIS_INVALIDO = "Você não está utilizando o recurso 2";
 	private final String RECURSO_UM_LIBERADO = "Você liberou o recurso 1";
 	private final String RECURSO_DOIS_LIBERADO = "Você liberou o recurso 2";
-	private final String RECURSO_UM_EXPIRADO = "O recurso 1 expirou";
-	private final String RECURSO_DOIS_EXPIRADO = "O recurso 2 expirou";
+	private final String RECURSO_UM_EXPIRADO = "O recurso 1 expirou\n";
+	private final String RECURSO_DOIS_EXPIRADO = "O recurso 2 expirou\n";
 
-
-	private final String RECURSO_UM_LIVRE = "O recurso 1 está livre";
-	private final String RECURSO_DOIS_LIVRE = "O recurso 2 está livre";
+	private final String RECURSO_UM_LIVRE = "O recurso 1 está livre, você pode utilizá-lo";
+	private final String RECURSO_DOIS_LIVRE = "O recurso 2 está livre, você pode utilizá-lo";
 
 	private final String RECURSO_JA_OBTIDO = "Você já possui esse recurso";
 	private final String STRING_VAZIA = "";
@@ -82,38 +81,73 @@ public class ServImpl extends UnicastRemoteObject implements InterfaceServ {
 
 		return assinatura;
 	}
-	public void liberarRecursoTimeout_1(InterfaceCli referenciaCliente) throws InvalidKeyException, NoSuchAlgorithmException, SignatureException, RemoteException{
+
+	public void liberarRecursoTimeout_1(InterfaceCli referenciaCliente)
+			throws InvalidKeyException, NoSuchAlgorithmException, SignatureException, RemoteException {
+		// Testa se o cliente não liberou o recurso antes
+		if (this.clienteComRecurso_1 != referenciaCliente.getId())
+			return;
+
 		byte[] assinatura = this.geraAssinatura(RECURSO_UM_EXPIRADO);
-		
-		if(this.clienteComRecurso_1 != -1){
+		if (this.clienteComRecurso_1 != -1) {
 			this.clienteComRecurso_1 = -1;
 			this.recursoDisponível_1 = true;
 			referenciaCliente.notificar(RECURSO_UM_EXPIRADO, assinatura);
 
 			if (clientesEmEspera1.size() > 0) {
-				byte[] assinatura_2 = this.geraAssinatura(RECURSO_DOIS_LIVRE);
+				this.recursoDisponível_1 = false;
+				byte[] assinatura_2 = this.geraAssinatura(RECURSO_UM_LIVRE);
 				InterfaceCli cliente = clientesEmEspera1.get(0);
 				this.clienteComRecurso_1 = cliente.getId();
 				clientesEmEspera1.remove(0);
-				cliente.notificar(RECURSO_DOIS_LIVRE, assinatura_2);
+				cliente.notificar(RECURSO_UM_LIVRE, assinatura_2);
+
+				new Timer().schedule(new TimerTask() {
+					@Override
+					public void run() {
+						try {
+							liberarRecursoTimeout_1(cliente);
+						} catch (InvalidKeyException | NoSuchAlgorithmException | SignatureException
+								| RemoteException e) {
+							e.printStackTrace();
+						}
+					}
+				}, TEMPO_LIMITE);
 			}
 		}
 	}
 
-	public void liberarRecursoTimeout_2(InterfaceCli referenciaCliente) throws InvalidKeyException, NoSuchAlgorithmException, SignatureException, RemoteException{
+	public void liberarRecursoTimeout_2(InterfaceCli referenciaCliente)
+			throws InvalidKeyException, NoSuchAlgorithmException, SignatureException, RemoteException {
+		// Testa se o cliente não liberou o recurso antes
+		if (this.clienteComRecurso_2 != referenciaCliente.getId())
+			return;
+
 		byte[] assinatura = this.geraAssinatura(RECURSO_DOIS_EXPIRADO);
-		
-		if(this.clienteComRecurso_2 != -1){
+
+		if (this.clienteComRecurso_2 != -1) {
 			this.clienteComRecurso_2 = -1;
 			this.recursoDisponível_2 = true;
 			referenciaCliente.notificar(RECURSO_DOIS_EXPIRADO, assinatura);
 
 			if (clientesEmEspera2.size() > 0) {
+				this.recursoDisponível_2 = false;
 				byte[] assinatura_2 = this.geraAssinatura(RECURSO_DOIS_LIVRE);
 				InterfaceCli cliente = clientesEmEspera2.get(0);
 				this.clienteComRecurso_2 = cliente.getId();
 				clientesEmEspera2.remove(0);
 				cliente.notificar(RECURSO_DOIS_LIVRE, assinatura_2);
+				new Timer().schedule(new TimerTask() {
+					@Override
+					public void run() {
+						try {
+							liberarRecursoTimeout_2(cliente);
+						} catch (InvalidKeyException | NoSuchAlgorithmException | SignatureException
+								| RemoteException e) {
+							e.printStackTrace();
+						}
+					}
+				}, TEMPO_LIMITE);
 			}
 		}
 	}
@@ -121,7 +155,7 @@ public class ServImpl extends UnicastRemoteObject implements InterfaceServ {
 	public String processaPedido_1(String text, InterfaceCli referenciaCliente)
 			throws RemoteException, InvalidKeyException, NoSuchAlgorithmException, SignatureException {
 		if (this.recursoDisponível_1) {
-			new Timer().schedule(new TimerTask(){ 
+			new Timer().schedule(new TimerTask() {
 				@Override
 				public void run() {
 					try {
@@ -129,7 +163,8 @@ public class ServImpl extends UnicastRemoteObject implements InterfaceServ {
 					} catch (InvalidKeyException | NoSuchAlgorithmException | SignatureException | RemoteException e) {
 						e.printStackTrace();
 					}
-				}}, TEMPO_LIMITE);
+				}
+			}, TEMPO_LIMITE);
 			this.recursoDisponível_1 = false;
 			this.clienteComRecurso_1 = referenciaCliente.getId();
 
@@ -142,9 +177,10 @@ public class ServImpl extends UnicastRemoteObject implements InterfaceServ {
 			// Cliente pediu recurso mais de uma vez
 			return PEGOU_RECURSO_UM;
 		}
-			/*
-		* Cliente não pegou o recurso, então deve ser notificado que o recurso está ocupado
-		*/
+		/*
+		 * Cliente não pegou o recurso, então deve ser notificado que o recurso está
+		 * ocupado
+		 */
 
 		byte[] assinatura = this.geraAssinatura(RECURSO_UM_OCUPADO);
 
@@ -164,7 +200,7 @@ public class ServImpl extends UnicastRemoteObject implements InterfaceServ {
 	public String processaPedido_2(String text, InterfaceCli referenciaCliente)
 			throws RemoteException, InvalidKeyException, NoSuchAlgorithmException, SignatureException {
 		if (this.recursoDisponível_2) {
-			new Timer().schedule(new TimerTask(){ 
+			new Timer().schedule(new TimerTask() {
 				@Override
 				public void run() {
 					try {
@@ -172,7 +208,8 @@ public class ServImpl extends UnicastRemoteObject implements InterfaceServ {
 					} catch (InvalidKeyException | NoSuchAlgorithmException | SignatureException | RemoteException e) {
 						e.printStackTrace();
 					}
-				}}, TEMPO_LIMITE);
+				}
+			}, TEMPO_LIMITE);
 			this.recursoDisponível_2 = false;
 			this.clienteComRecurso_2 = referenciaCliente.getId();
 
@@ -186,8 +223,9 @@ public class ServImpl extends UnicastRemoteObject implements InterfaceServ {
 		}
 
 		/*
-		* Cliente não pegou o recurso, então deve ser notificado que o recurso está ocupado
-		*/
+		 * Cliente não pegou o recurso, então deve ser notificado que o recurso está
+		 * ocupado
+		 */
 
 		byte[] assinatura = this.geraAssinatura(RECURSO_DOIS_OCUPADO);
 
@@ -210,7 +248,8 @@ public class ServImpl extends UnicastRemoteObject implements InterfaceServ {
 
 		if (referenciaCliente.getId() != this.clienteComRecurso_1) {
 			System.out
-					.println(Arrays.toString(clientesQueJáPediramRecurso.toArray()) + " " + referenciaCliente.getId());
+					.println(
+							"O cliente " + referenciaCliente.getId() + " registrou interesse no recurso " + numRecurso);
 
 			if (numRecurso == 1)
 				return processaPedido_1(text, referenciaCliente);
@@ -227,6 +266,9 @@ public class ServImpl extends UnicastRemoteObject implements InterfaceServ {
 	public String registrarLiberacao(String text, InterfaceCli referenciaCliente, int numRecurso)
 			throws RemoteException, RemoteException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
 
+		System.out
+				.println(
+						"O cliente " + referenciaCliente.getId() + " efetuou a liberação do recurso " + numRecurso);
 		if (numRecurso == 1) {
 			if (referenciaCliente.getId() != this.clienteComRecurso_1) {
 				return RECURSO_UM_INVALIDO;
@@ -238,7 +280,17 @@ public class ServImpl extends UnicastRemoteObject implements InterfaceServ {
 				this.clienteComRecurso_1 = cliente.getId();
 				clientesEmEspera1.remove(0);
 				cliente.notificar(RECURSO_UM_LIVRE, assinatura);
-
+				new Timer().schedule(new TimerTask() {
+					@Override
+					public void run() {
+						try {
+							liberarRecursoTimeout_1(cliente);
+						} catch (InvalidKeyException | NoSuchAlgorithmException | SignatureException
+								| RemoteException e) {
+							e.printStackTrace();
+						}
+					}
+				}, TEMPO_LIMITE);
 				return RECURSO_UM_LIBERADO;
 			}
 			this.recursoDisponível_1 = true;
@@ -257,7 +309,17 @@ public class ServImpl extends UnicastRemoteObject implements InterfaceServ {
 				this.clienteComRecurso_2 = cliente.getId();
 				clientesEmEspera2.remove(0);
 				cliente.notificar(RECURSO_DOIS_LIVRE, assinatura);
-
+				new Timer().schedule(new TimerTask() {
+					@Override
+					public void run() {
+						try {
+							liberarRecursoTimeout_2(cliente);
+						} catch (InvalidKeyException | NoSuchAlgorithmException | SignatureException
+								| RemoteException e) {
+							e.printStackTrace();
+						}
+					}
+				}, TEMPO_LIMITE);
 				return RECURSO_DOIS_LIBERADO;
 			}
 			this.recursoDisponível_2 = true;
