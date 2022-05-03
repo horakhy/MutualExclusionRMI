@@ -2,8 +2,8 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.Scanner;
 
-import helloWorld.CliImpl;
-import helloWorld.InterfaceServ;
+import mutualExclusion.CliImpl;
+import mutualExclusion.InterfaceServ;
 
 public class Client {
     public static void main(String[] args) throws Exception {

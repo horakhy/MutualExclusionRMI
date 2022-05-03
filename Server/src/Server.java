@@ -1,7 +1,7 @@
 import java.rmi.registry.*;
 
-import helloWorld.InterfaceServ;
-import helloWorld.ServImpl;
+import mutualExclusion.InterfaceServ;
+import mutualExclusion.ServImpl;
 
 public class Server {
     public static void main(String[] args) throws Exception {

@@ -1,4 +1,4 @@
-package helloWorld;
+package mutualExclusion;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;

@@ -1,4 +1,4 @@
-package helloWorld;
+package mutualExclusion;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -61,7 +61,6 @@ public class ServImpl extends UnicastRemoteObject implements InterfaceServ {
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
 		}
-
 	}
 
 	public byte[] geraAssinatura(String mensagem) throws NoSuchAlgorithmException,
