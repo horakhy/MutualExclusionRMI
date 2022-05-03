@@ -151,6 +151,7 @@ public class ServImpl extends UnicastRemoteObject implements InterfaceServ {
 	public String processaPedido_1(String text, InterfaceCli referenciaCliente)
 			throws RemoteException, InvalidKeyException, NoSuchAlgorithmException, SignatureException {
 		if (this.recursoDisponível_1) {
+			// Tempo para expirar o recurso
 			new Timer().schedule(new TimerTask() {
 				@Override
 				public void run() {
