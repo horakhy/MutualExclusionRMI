@@ -47,10 +47,6 @@ public class ServImpl extends UnicastRemoteObject implements InterfaceServ {
 
 	}
 
-	public PublicKey getChavePublica() {
-		return chavePublica;
-	}
-
 	public void geraChaves() {
 		// Geração das chaves públicas e privadas
 		KeyPairGenerator kpg;
@@ -200,6 +196,7 @@ public class ServImpl extends UnicastRemoteObject implements InterfaceServ {
 	public String processaPedido_2(String text, InterfaceCli referenciaCliente)
 			throws RemoteException, InvalidKeyException, NoSuchAlgorithmException, SignatureException {
 		if (this.recursoDisponível_2) {
+			// Tempo para expirar o recurso
 			new Timer().schedule(new TimerTask() {
 				@Override
 				public void run() {
@@ -263,14 +260,14 @@ public class ServImpl extends UnicastRemoteObject implements InterfaceServ {
 	}
 
 	@Override
-	public String registrarLiberacao(String text, InterfaceCli referenciaCliente, int numRecurso)
+	public String registrarLiberacao(String text, long idCliente, int numRecurso)
 			throws RemoteException, RemoteException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
 
 		System.out
 				.println(
-						"O cliente " + referenciaCliente.getId() + " efetuou a liberação do recurso " + numRecurso);
+						"O cliente " + idCliente + " efetuou a liberação do recurso " + numRecurso);
 		if (numRecurso == 1) {
-			if (referenciaCliente.getId() != this.clienteComRecurso_1) {
+			if (idCliente != this.clienteComRecurso_1) {
 				return RECURSO_UM_INVALIDO;
 			}
 
@@ -299,7 +296,7 @@ public class ServImpl extends UnicastRemoteObject implements InterfaceServ {
 		}
 
 		if (numRecurso == 2) {
-			if (referenciaCliente.getId() != this.clienteComRecurso_2) {
+			if (idCliente != this.clienteComRecurso_2) {
 				return RECURSO_DOIS_INVALIDO;
 			}
 

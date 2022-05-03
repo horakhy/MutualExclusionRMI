@@ -1,6 +1,5 @@
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.security.PublicKey;
 import java.util.Scanner;
 
 import helloWorld.CliImpl;
@@ -51,12 +50,12 @@ public class Client {
                     break;
                 case 3:
                     System.out.println("Liberando o recurso 1...");
-                    liberouRecurso_1 = referenciaServidor.registrarLiberacao("", referenciaCliente, 1);
+                    liberouRecurso_1 = referenciaServidor.registrarLiberacao("", referenciaCliente.getId(), 1);
                     System.out.println(liberouRecurso_1);
                     break;
                 case 4:
                     System.out.println("Liberando o recurso 2...");
-                    liberouRecurso_2 = referenciaServidor.registrarLiberacao("", referenciaCliente, 2);
+                    liberouRecurso_2 = referenciaServidor.registrarLiberacao("", referenciaCliente.getId(), 2);
                     System.out.println(liberouRecurso_2);
                     break;
                 case 5:

@@ -8,5 +8,5 @@ public interface InterfaceServ extends Remote {
 
 	public String registrarInteresse(String text, InterfaceCli referenciaCliente, int numRecurso) throws RemoteException, InvalidKeyException, NoSuchAlgorithmException, SignatureException;
 
-	public String registrarLiberacao(String text, InterfaceCli referenciaCliente, int numRecurso) throws RemoteException, RemoteException, NoSuchAlgorithmException, InvalidKeyException, SignatureException;
+	public String registrarLiberacao(String text, long idCliente, int numRecurso) throws RemoteException, RemoteException, NoSuchAlgorithmException, InvalidKeyException, SignatureException;
 }

@@ -10,7 +10,7 @@ public class CliImpl extends UnicastRemoteObject implements InterfaceCli {
 	private PublicKey chavePublicaServidor;
 
 	public CliImpl(InterfaceServ referenciaServidor) throws RemoteException, InvalidKeyException, NoSuchAlgorithmException, SignatureException {
-		this.id = (UUID.randomUUID().getMostSignificantBits() & Long.MAX_VALUE) % 1000;
+		this.id = (UUID.randomUUID().getMostSignificantBits() & Long.MAX_VALUE) % 1000000;
 		System.out.println("\nCliente " + this.id + " criado\n");
 	}
 	@Override
@@ -44,35 +44,3 @@ public class CliImpl extends UnicastRemoteObject implements InterfaceCli {
 		}
 	}
 }
-// private PublicKey pubKey;
-
-// public PublicKey getPubKey() {
-// return pubKey;
-// }
-
-// public void setPubKey(PublicKey pubKey) {
-// this.pubKey = pubKey;
-// }
-
-// public byte[] geraAssinatura(String mensagem) throws
-// NoSuchAlgorithmException,
-// InvalidKeyException, SignatureException {
-// Signature sig = Signature.getInstance("DSA");
-
-// //Geração das chaves públicas e privadas
-// KeyPairGenerator kpg = KeyPairGenerator.getInstance("DSA");
-// SecureRandom secRan = new SecureRandom();
-// kpg.initialize(512, secRan);
-// KeyPair keyP = kpg.generateKeyPair();
-// this.pubKey = keyP.getPublic();
-// PrivateKey priKey = keyP.getPrivate();
-
-// //Inicializando Obj Signature com a Chave Privada
-// sig.initSign(priKey);
-
-// //Gerar assinatura
-// sig.update(mensagem.getBytes());
-// byte[] assinatura = sig.sign();
-
-// return assinatura;
-// }
